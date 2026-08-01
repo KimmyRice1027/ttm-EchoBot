@@ -79,7 +79,7 @@ async def game_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
     await query.edit_message_text(text=text, parse_mode="Markdown")
     return ENTER_INFO
 
-# User ID / Player ID လက်ခံရယူခြင်း (ခလုတ်များ သေချာပေါက် ပေါ်လာစေရန် ပြင်ဆင်ပြီး)
+# User ID / Player ID လက်ခံရယူခြင်း
 async def receive_info(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     user_info = update.message.text
     context.user_data['user_info'] = user_info
@@ -136,6 +136,10 @@ async def select_package(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
 # ငွေလွှဲပြေစာလက်ခံပြီး Admin ထံ ပို့ပေးခြင်း
 async def receive_payment(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    if not update.message.photo:
+        await update.message.reply_text("⚠️ ကျေးဇူးပြု၍ ငွေလွှဲပြေစာ (Screenshot ပုံ) ကိုသာ ပို့ပေးပါ။")
+        return UPLOAD_PAYMENT
+
     photo = update.message.photo[-1]
     user = update.effective_user
     
@@ -241,14 +245,17 @@ async def run_bot():
         states={
             ENTER_INFO: [MessageHandler(filters.TEXT & ~filters.COMMAND, receive_info)],
             SELECT_PKG: [CallbackQueryHandler(select_package, pattern="^pkg_")],
-            UPLOAD_PAYMENT: [MessageHandler(filters.PHOTO, receive_payment)]
+            UPLOAD_PAYMENT: [
+                MessageHandler(filters.PHOTO, receive_payment),
+                MessageHandler(filters.TEXT & ~filters.COMMAND, receive_payment) # စာသားပို့မိပါက ပုံပို့ရန် သတိပေးရန်
+            ]
         },
         fallbacks=[CommandHandler("cancel", cancel), CommandHandler("start", start)],
         per_message=True
     )
 
-    application.add_handler(CommandHandler("start", start))
     application.add_handler(conv_handler)
+    application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("addadmin", add_admin))
     application.add_handler(CommandHandler("admin", admin_panel))
     application.add_handler(CallbackQueryHandler(admin_buttons, pattern="^admin_"))
