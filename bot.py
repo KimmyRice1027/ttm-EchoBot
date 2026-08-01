@@ -1,5 +1,6 @@
 import logging
 import os
+import asyncio
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import Application, CallbackQueryHandler, CommandHandler, ContextTypes
 
@@ -106,7 +107,17 @@ def main() -> None:
     application.add_handler(CommandHandler("admin", admin_panel))
     application.add_handler(CallbackQueryHandler(button))
 
-    application.run_polling()
+    # Python ဗားရှင်းအသစ်များအတွက် Event Loop အမှားမတတ်စေရန် ဤကဲ့သို့ Run ပါ
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = None
+
+    if loop and loop.is_running():
+        application.run_polling()
+    else:
+        asyncio.run(application.initialize())
+        application.run_polling()
 
 if __name__ == "__main__":
     main()
