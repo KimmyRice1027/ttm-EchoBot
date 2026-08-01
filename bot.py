@@ -1,5 +1,6 @@
 import logging
 import os
+import asyncio
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import (
     Application,
@@ -224,7 +225,7 @@ async def admin_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         admin_text = "👥 **Active Admins List:**\n" + "\n".join([f"- `{aid}`" for aid in admins])
         await query.edit_message_text(text=admin_text, parse_mode="Markdown")
 
-def main() -> None:
+async def run_bot():
     TOKEN = os.environ.get("BOT_TOKEN")
     
     if not TOKEN:
@@ -232,6 +233,7 @@ def main() -> None:
 
     application = Application.builder().token(TOKEN).build()
 
+    # per_message=True ထည့်သွင်းပေးခြင်းဖြင့် Warning များကို ရှင်းလင်းထားသည်
     conv_handler = ConversationHandler(
         entry_points=[
             CallbackQueryHandler(game_choice, pattern="^(mlbb|pubg)$")
@@ -241,7 +243,8 @@ def main() -> None:
             SELECT_PKG: [CallbackQueryHandler(select_package, pattern="^pkg_")],
             UPLOAD_PAYMENT: [MessageHandler(filters.PHOTO, receive_payment)]
         },
-        fallbacks=[CommandHandler("cancel", cancel), CommandHandler("start", start)]
+        fallbacks=[CommandHandler("cancel", cancel), CommandHandler("start", start)],
+        per_message=True
     )
 
     application.add_handler(CommandHandler("start", start))
@@ -250,7 +253,19 @@ def main() -> None:
     application.add_handler(CommandHandler("admin", admin_panel))
     application.add_handler(CallbackQueryHandler(admin_buttons, pattern="^admin_"))
 
-    application.run_polling()
+    # Render ဆာဗာများနှင့် Python ဗားရှင်းအသစ်များအတွက် Async စနစ်ဖြင့် လည်ပတ်ခြင်း
+    await application.initialize()
+    await application.start()
+    await application.updater.start_polling()
+    
+    stop_event = asyncio.Event()
+    await stop_event.wait()
+
+def main() -> None:
+    try:
+        asyncio.run(run_bot())
+    except KeyboardInterrupt:
+        pass
 
 if __name__ == "__main__":
     main()
