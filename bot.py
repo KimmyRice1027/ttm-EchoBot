@@ -1,6 +1,5 @@
 import logging
 import os
-import asyncio
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import (
     Application,
@@ -72,9 +71,9 @@ async def game_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
     context.user_data['game'] = "MLBB Diamonds" if game == "mlbb" else "PUBG UC"
     
     if game == "mlbb":
-        text = "💎 **MLBB Diamonds ဝယ်ယူခြင်း**\n\nကျေးဇူးပြု၍ သင့်ရဲ့ **User ID နဲ့ Server ID** ကို ပို့ပေးပါကွာ။\n(ဥပမာ - `12345678 (1234)`)"
+        text = "💎 **MLBB Diamonds ဝယ်ယူခြင်း**\n\nကျေးဇူးပြု၍ သင့်ရဲ့ **User ID နဲ့ Server ID** ကို ပို့ပေးပါ။\n(ဥပမာ - `12345678 (1234)`)"
     else:
-        text = "🛒 **PUBG UC ဝယ်ယူခြင်း**\n\nကျေးဇူးပြု၍ သင့်ရဲ့ **Player ID** ကို ပို့ပေးပါကွာ။\n(ဥပမာ - `5123456789`)"
+        text = "🛒 **PUBG UC ဝယ်ယူခြင်း**\n\nကျေးဇူးပြု၍ သင့်ရဲ့ **Player ID** ကို ပို့ပေးပါ။\n(ဥပမာ - `5123456789`)"
         
     await query.edit_message_text(text=text, parse_mode="Markdown")
     return ENTER_INFO
@@ -86,7 +85,6 @@ async def receive_info(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
     
     game = context.user_data.get('game')
     
-    # ဂိမ်းအလိုက် Package များပြသခြင်း
     if "MLBB" in game:
         keyboard = [
             [InlineKeyboardButton("86 Diamonds - 5,000 MMK", callback_data="pkg_ml_86")],
@@ -143,13 +141,11 @@ async def receive_payment(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     user_info = context.user_data.get('user_info', 'N/A')
     package = context.user_data.get('package', 'N/A')
     
-    # ဖောက်သည်ကို အကြောင်းပြန်ခြင်း
     await update.message.reply_text(
         "✅ သင့်ရဲ့ ငွေလွှဲပြေစာနှင့် အော်ဒါကို အောင်မြင်စွာ လက်ခံရရှိပါပြီ။\n"
         "Admin မှ စစ်ဆေးပြီး အမြန်ဆုံး ဖြည့်သွင်းပေးပါမည်။ ကျေးဇူးတင်ပါတယ်။ 🙏"
     )
     
-    # Admin အားလုံးဆီသို့ အော်ဒါအချက်အလက် ပို့ပေးခြင်း
     admins = load_admins()
     admin_msg = (
         f"🔔 **အော်ဒါအသစ် ရောက်ရှိပါပြီ!**\n\n"
@@ -197,7 +193,7 @@ async def add_admin(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     except ValueError:
         await update.message.reply_text("❌ မှားယွင်းနေပါသည်၊ User ID သည် ဂဏန်းဖြစ်ရပါမည်။")
 
-# Admin များသာ ဝင်သုံးနိုင်သော Panel
+# Admin များသာ ဝင်သုံးနိုင်သော Panel (/admin)
 async def admin_panel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = update.effective_user.id
     admins = load_admins()
@@ -228,7 +224,7 @@ async def admin_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         admin_text = "👥 **Active Admins List:**\n" + "\n".join([f"- `{aid}`" for aid in admins])
         await query.edit_message_text(text=admin_text, parse_mode="Markdown")
 
-async def run_bot():
+def main() -> None:
     TOKEN = os.environ.get("BOT_TOKEN")
     
     if not TOKEN:
@@ -236,7 +232,6 @@ async def run_bot():
 
     application = Application.builder().token(TOKEN).build()
 
-    # Conversation Handler (ဝယ်ယူမှုအဆင့်ဆင့်ကို ထိန်းချုပ်ရန်)
     conv_handler = ConversationHandler(
         entry_points=[
             CallbackQueryHandler(game_choice, pattern="^(mlbb|pubg)$")
@@ -255,18 +250,8 @@ async def run_bot():
     application.add_handler(CommandHandler("admin", admin_panel))
     application.add_handler(CallbackQueryHandler(admin_buttons, pattern="^admin_"))
 
-    await application.initialize()
-    await application.start()
-    await application.updater.start_polling()
-    
-    stop_event = asyncio.Event()
-    await stop_event.wait()
-
-def main() -> None:
-    try:
-        asyncio.run(run_bot())
-    except KeyboardInterrupt:
-        pass
+    # ပုံမှန် Polling စနစ်ဖြင့် တိုက်ရိုက်လည်ပတ်စေခြင်း
+    application.run_polling()
 
 if __name__ == "__main__":
     main()
