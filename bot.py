@@ -242,7 +242,7 @@ def main() -> None:
             UPLOAD_PAYMENT: [MessageHandler(filters.PHOTO, receive_payment)]
         },
         fallbacks=[CommandHandler("cancel", cancel), CommandHandler("start", start)]
-    ]
+    )
 
     application.add_handler(CommandHandler("start", start))
     application.add_handler(conv_handler)
@@ -250,7 +250,6 @@ def main() -> None:
     application.add_handler(CommandHandler("admin", admin_panel))
     application.add_handler(CallbackQueryHandler(admin_buttons, pattern="^admin_"))
 
-    # ပုံမှန် Polling စနစ်ဖြင့် တိုက်ရိုက်လည်ပတ်စေခြင်း
     application.run_polling()
 
 if __name__ == "__main__":
