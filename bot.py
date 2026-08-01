@@ -79,12 +79,12 @@ async def game_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
     await query.edit_message_text(text=text, parse_mode="Markdown")
     return ENTER_INFO
 
-# User ID / Player ID လက်ခံရယူခြင်း
+# User ID / Player ID လက်ခံရယူခြင်း (ခလုတ်များ သေချာပေါက် ပေါ်လာစေရန် ပြင်ဆင်ပြီး)
 async def receive_info(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     user_info = update.message.text
     context.user_data['user_info'] = user_info
     
-    game = context.user_data.get('game')
+    game = context.user_data.get('game', 'MLBB Diamonds')
     
     if "MLBB" in game:
         keyboard = [
@@ -99,6 +99,7 @@ async def receive_info(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
         ]
         
     reply_markup = InlineKeyboardMarkup(keyboard)
+    
     await update.message.reply_text(
         f"✅ အချက်အလက် လက်ခံရရှိပါပြီ။\nအကောင့်အချက်အလက်: `{user_info}`\n\nအောက်ပါ Package များထဲမှ လိုချင်သည်ကို ရွေးချယ်ပါ -",
         reply_markup=reply_markup,
@@ -233,7 +234,6 @@ async def run_bot():
 
     application = Application.builder().token(TOKEN).build()
 
-    # per_message=True ထည့်သွင်းပေးခြင်းဖြင့် Warning များကို ရှင်းလင်းထားသည်
     conv_handler = ConversationHandler(
         entry_points=[
             CallbackQueryHandler(game_choice, pattern="^(mlbb|pubg)$")
@@ -253,7 +253,6 @@ async def run_bot():
     application.add_handler(CommandHandler("admin", admin_panel))
     application.add_handler(CallbackQueryHandler(admin_buttons, pattern="^admin_"))
 
-    # Render ဆာဗာများနှင့် Python ဗားရှင်းအသစ်များအတွက် Async စနစ်ဖြင့် လည်ပတ်ခြင်း
     await application.initialize()
     await application.start()
     await application.updater.start_polling()
