@@ -94,7 +94,7 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     elif query.data == "pubg":
         await query.edit_message_text(text="🛒 PUBG UC ဝယ်ယူရန် ကျေးဇူးပြု၍ Player ID ကို ပေးပို့ပါ။")
 
-def main() -> None:
+async def run_bot():
     TOKEN = os.environ.get("BOT_TOKEN")
     
     if not TOKEN:
@@ -107,17 +107,20 @@ def main() -> None:
     application.add_handler(CommandHandler("admin", admin_panel))
     application.add_handler(CallbackQueryHandler(button))
 
-    # Python ဗားရှင်းအသစ်များအတွက် Event Loop အမှားမတတ်စေရန် ဤကဲ့သို့ Run ပါ
-    try:
-        loop = asyncio.get_running_loop()
-    except RuntimeError:
-        loop = None
+    # Python ဗားရှင်းအသစ်များနှင့် Server များတွင် Error မတက်စေရန် Async ပုံစံဖြင့် စတင်ခြင်း
+    await application.initialize()
+    await application.start()
+    await application.updater.start_polling()
+    
+    # Bot အဆက်မပြတ် အလုပ်လုပ်နေစေရန် ထိန်းထားခြင်း
+    stop_event = asyncio.Event()
+    await stop_event.wait()
 
-    if loop and loop.is_running():
-        application.run_polling()
-    else:
-        asyncio.run(application.initialize())
-        application.run_polling()
+def main() -> None:
+    try:
+        asyncio.run(run_bot())
+    except KeyboardInterrupt:
+        pass
 
 if __name__ == "__main__":
     main()
